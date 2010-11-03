@@ -32,13 +32,18 @@ def doppler_factor(v):
     beta=v/physcon.c
     return np.sqrt((1+beta)/(1-beta))
 
-def load_ephemerides(file):
+def load_ephemerides(file='/home/zonca/p/testenv/eph/eph.txt'):
     '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, convertes Km to m,
     saves to npy file'''
-    eph = np.loadtxt(file, delimiter=',',usecols = (0,1,2,3),converters={0:jd2obt})
-    eph[:,1:] *= 1e3
+    l.debug('Loading ephemerides from %s' % file)
     npyfile = file.replace('txt','npy')
-    np.save(npyfile, eph)
+    try:
+        eph = np.load(npyfile)
+    except IOError:
+        eph = np.loadtxt(file, delimiter=',',usecols = (0,1,2,3),converters={0:jd2obt})
+        eph[:,1:] *= 1e3
+        npyfile = file.replace('txt','npy')
+        np.save(npyfile, eph)
     return eph
     
 def Planck_to_RJ(T,nu):
@@ -52,21 +57,13 @@ class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
 
     def __init__(self, coord='G'):
-        self.load_ephemerides()
+        self.eph = load_ephemerides()
         self.coord = coord
         if self.coord == 'G':
             self.convert_coord = ecl2gal
         else:
             # no conversion
             self.convert_coord = lambda x:x
-
-    def load_ephemerides(self, file='/home/zonca/p/testenv/eph/eph.txt'):
-        l.debug('Loading ephemerides from %s' % file)
-        npyfile = file.replace('txt','npy')
-        try:
-            self.eph = np.load(npyfile)
-        except IOError:
-            self.eph = load_ephemerides(file)
 
     def satellite_v(self, obt):
         '''satellite velocity from Horizon Km/s sol sys bar mean ecliptic ref
