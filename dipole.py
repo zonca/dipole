@@ -74,14 +74,14 @@ class SatelliteVelocity(object):
         vsat = self.eph[i_interp,1:]
 
         l.debug('Computing satellite speed:done')
-        return vsat
+        return self.convert_coord(vsat)
 
     def solar_system_v(self):
-        return SOLSYSSPEED_V
+        return self.convert_coord(SOLSYSSPEED_V)
 
     def total_v(self, obt):
         #TODO relativistic sum
-        return ecl2gal(self.satellite_v(obt) + self.solar_system_v())
+        return self.satellite_v(obt) + self.solar_system_v()
 
 class Dipole(object):
 
