@@ -45,3 +45,4 @@ std = (dipole - dipx[i:i+span]).std()
 print('Standard deviation of difference of DPC and TE dipole')
 print(std)
 assert (dipole - dipx[i:i+span]).std() < TOLERANCE
+plt.show()
