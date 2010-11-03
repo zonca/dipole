@@ -31,6 +31,15 @@ def jd2obt(jd):
 def doppler_factor(v):
     beta=v/physcon.c
     return np.sqrt((1+beta)/(1-beta))
+
+def load_ephemerides(file):
+    '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, convertes Km to m,
+    saves to npy file'''
+    eph = np.loadtxt(file, delimiter=',',usecols = (0,1,2,3),converters={0:jd2obt})
+    eph[:,1:] *= 1e3
+    npyfile = file.replace('txt','npy')
+    np.save(npyfile, eph)
+    return eph
     
 def Planck_to_RJ(T,nu):
     h_nu_over_k = physcon.h * nu / physcon.k_B
@@ -57,10 +66,7 @@ class SatelliteVelocity(object):
         try:
             self.eph = np.load(npyfile)
         except IOError:
-            eph = np.loadtxt(file, delimiter=',',usecols = (0,1,2,3),converters={0:jd2obt})
-            eph[:,1:] *= 1e3
-            self.eph = eph
-            np.save(npyfile, eph)
+            self.eph = load_ephemerides(file)
 
     def satellite_v(self, obt):
         '''satellite velocity from Horizon Km/s sol sys bar mean ecliptic ref
