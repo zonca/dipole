@@ -41,7 +41,7 @@ SOLSYSSPEED = 371000.0
 ## 369.0 +- .9 Km/s
 #SOLSYSSPEED = 369e3
 ## direction in galactic coordinates
-##(d, l, b) = (3.355 ± 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
+##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
 #SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
 #SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
 #SOLSYSSPEED_GAL_U = ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
