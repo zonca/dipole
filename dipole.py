@@ -6,12 +6,27 @@ import math
 import physcon
 from exceptions import IOError
 
-from healpy.pixelfunc import ang2vec
+from healpy.pixelfunc import ang2vec, vec2ang
 
 import quaternionarray as qarray
 
 T_CMB = 2.725
+
+#from hidra
 QECL2GAL = np.array((-0.37382079227204573, 0.33419217216073838, 0.64478939348298625, 0.57690575088960561))
+#from healpix
+#ecl2gal = np.array([[ -5.48824860e-02,  -9.93821033e-01,  -9.64762490e-02],
+#                    [  4.94116468e-01,  -1.10993846e-01,   8.62281440e-01],
+#                    [ -8.67661702e-01,  -3.46354000e-04,   4.97154957e-01]])
+#Quaternion.Quat(ecl2gal).q
+#              array([-0.37381694,  0.3341907 ,  0.64479285,  0.57690524])
+
+def ecl2gal(vec):
+    return qarray.rotate(QECL2GAL , vec)
+
+def gal2ecl(vec):
+    return qarray.rotate(qarray.inv(QECL2GAL) , vec)
+
 
 #solar system speed vector
 # ONE
@@ -20,7 +35,22 @@ SOLSYSDIR_ECL_PHI = 3.0039153062803194
 # TWO
 #SOLSYSDIR_ECL_THETA = 1.765248346
 #SOLSYSDIR_ECL_PHI = 2.995840906
-SOLSYSSPEED = 371000.0 #WMAP5 says 369.0 +- .9 Km/s
+SOLSYSSPEED = 371000.0 
+
+########## WMAP5  from: http://arxiv.org/abs/0803.0732
+## 369.0 +- .9 Km/s
+#SOLSYSSPEED = 369e3
+## direction in galactic coordinates
+##(d, l, b) = (3.355 ± 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
+#SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
+#SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
+#SOLSYSSPEED_GAL_U = ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
+#SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
+#SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
+#SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = vec2ang(SOLSYSSPEED_ECL_U)
+#SOLSYSSPEED_V = SOLSYSSPEED * SOLSYSSPEED_ECL_U
+########## /WMAP5
+
 SOLSYSSPEED_V = SOLSYSSPEED * ang2vec(SOLSYSDIR_ECL_THETA,SOLSYSDIR_ECL_PHI)
 
 def jd2obt(jd):
@@ -49,9 +79,6 @@ def load_ephemerides(file='/home/zonca/p/testenv/eph/eph.txt'):
 def Planck_to_RJ(T,nu):
     h_nu_over_k = physcon.h * nu / physcon.k_B
     return h_nu_over_k / ( np.exp(h_nu_over_k / T)-1)
-
-def ecl2gal(vec):
-    return qarray.rotate(QECL2GAL , vec)
 
 class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
