@@ -27,13 +27,14 @@ def ecl2gal(vec):
 def gal2ecl(vec):
     return qarray.rotate(qarray.inv(QECL2GAL) , vec)
 
-def relativistic_add(u,v):
+def relativistic_add(v,u):
     #http://en.wikipedia.org/wiki/Velocity-addition_formula
     v2 = qarray.arraylist_dot(v,v) 
+    c2 = physcon.c ** 2
     v_dot_u = qarray.arraylist_dot(v,u) 
     u_II = v_dot_u / v2 * v
     u_I_ = u - u_II
-    return (v + u_I_ + np.sqrt(1 - v2) * u_I_) / (1 + v_dot_u)
+    return (v + u_II + np.sqrt(1 - v2/c2) * u_I_) / (1 + v_dot_u/c2)
 
 #solar system speed vector
 # ONE
