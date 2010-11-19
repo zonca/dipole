@@ -27,28 +27,35 @@ def ecl2gal(vec):
 def gal2ecl(vec):
     return qarray.rotate(qarray.inv(QECL2GAL) , vec)
 
+def relativistic_add(u,v):
+    #http://en.wikipedia.org/wiki/Velocity-addition_formula
+    v2 = qarray.arraylist_dot(v,v) 
+    v_dot_u = qarray.arraylist_dot(v,u) 
+    u_II = v_dot_u / v2 * v
+    u_I_ = u - u_II
+    return (v + u_I_ + np.sqrt(1 - v2) * u_I_) / (1 + v_dot_u)
 
 #solar system speed vector
 # ONE
-SOLSYSDIR_ECL_THETA = 1.7678013480275747
-SOLSYSDIR_ECL_PHI = 3.0039153062803194
+#SOLSYSDIR_ECL_THETA = 1.7678013480275747
+#SOLSYSDIR_ECL_PHI = 3.0039153062803194
 # TWO
 #SOLSYSDIR_ECL_THETA = 1.765248346
 #SOLSYSDIR_ECL_PHI = 2.995840906
-SOLSYSSPEED = 371000.0 
+#SOLSYSSPEED = 371000.0 
 
 ########## WMAP5  from: http://arxiv.org/abs/0803.0732
-## 369.0 +- .9 Km/s
-#SOLSYSSPEED = 369e3
-## direction in galactic coordinates
-##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
-#SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
-#SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
-#SOLSYSSPEED_GAL_U = ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
-#SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
-#SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
-#SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = vec2ang(SOLSYSSPEED_ECL_U)
-#SOLSYSSPEED_V = SOLSYSSPEED * SOLSYSSPEED_ECL_U
+# 369.0 +- .9 Km/s
+SOLSYSSPEED = 369e3
+# direction in galactic coordinates
+#(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
+SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
+SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
+SOLSYSSPEED_GAL_U = ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
+SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
+SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
+SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = vec2ang(SOLSYSSPEED_ECL_U)
+SOLSYSSPEED_V = SOLSYSSPEED * SOLSYSSPEED_ECL_U
 ########## /WMAP5
 
 SOLSYSSPEED_V = SOLSYSSPEED * ang2vec(SOLSYSDIR_ECL_THETA,SOLSYSDIR_ECL_PHI)
@@ -142,8 +149,8 @@ if __name__ == '__main__':
     vec = pnt.get(ch)
 
     #dipole
-    dip = Dipole(obt, type='total')
-    d = dip.get(ch, vec, T_CMB=True)
+    dip = Dipole(obt, type='total', K_CMB=True)
+    d = dip.get(ch, vec)
 
     #plot
     import matplotlib.pyplot as plt
