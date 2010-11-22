@@ -103,7 +103,7 @@ class SatelliteVelocity(object):
             # no conversion
             self.convert_coord = lambda x:x
 
-    def satellite_v(self, obt):
+    def orbital_v(self, obt):
         '''satellite velocity from Horizon Km/s sol sys bar mean ecliptic ref
         
         nearest value from 1 minute sampled Horizon data'''
@@ -122,18 +122,32 @@ class SatelliteVelocity(object):
 
     def total_v(self, obt, relativistic=True):
         if relativistic:
-            l.info('Relativistic velocity sum')
-            return relativistic_add(self.solar_system_v(), self.satellite_v(obt))
+            l.info('Relativistic velocity addition')
+            return relativistic_add(self.solar_system_v(), self.orbital_v(obt))
         else:
-            l.info('Classical velocity sum')
-            return self.solar_system_v() + self.satellite_v(obt)
+            l.info('Classical velocity addition')
+            return self.solar_system_v() + self.orbital_v(obt)
 
 class Dipole(object):
+    """Dipole prediction:
 
-    def __init__(self, obt, type='total', relativistic=True, K_CMB=True, coord='G'):
+        type: 'total','solar_system', 'orbital'
+    """
+
+    def __init__(self, obt, type='total', relativistic=True, K_CMB=True, coord='G', lowmem=True):
+
+        self.satellite_velocity = SatelliteVelocity(coord=coord)
         if type == 'total':
-            self.satellite_v = SatelliteVelocity(coord=coord).total_v(obt, relativistic = relativistic)
+            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = relativistic)
+        elif type == 'solar_system':
+            self.satellite_v = self.satellite_velocity.solar_system_v(obt)
+        elif type == 'orbital':
+            self.satellite_v = self.satellite_velocity.orbital_v(obt)
+            
         self.K_CMB = K_CMB
+
+        if lowmem:
+            del self.satellite_velocity
 
     def get(self, ch, vec):
         l.info('Computing dipole temperature')
