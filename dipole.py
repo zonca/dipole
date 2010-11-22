@@ -131,14 +131,16 @@ class SatelliteVelocity(object):
 class Dipole(object):
     """Dipole prediction:
 
-        type: 'total','solar_system', 'orbital'
+        type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt, type='total', relativistic=True, K_CMB=True, coord='G', lowmem=True):
+    def __init__(self, obt, type='total', K_CMB=True, coord='G', lowmem=True):
 
         self.satellite_velocity = SatelliteVelocity(coord=coord)
         if type == 'total':
-            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = relativistic)
+            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = True)
+        elif type == 'total_classic':
+            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = False)
         elif type == 'solar_system':
             self.satellite_v = self.satellite_velocity.solar_system_v(obt)
         elif type == 'orbital':
