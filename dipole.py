@@ -153,7 +153,12 @@ class Dipole(object):
 
     def get(self, ch, vec):
         l.info('Computing dipole temperature')
-        T_dipole_CMB = doppler_factor(qarray.arraylist_dot(self.satellite_v,vec).flatten()) * T_CMB
+        #T_dipole_CMB = doppler_factor(qarray.arraylist_dot(self.satellite_v,vec).flatten()) * T_CMB
+        vel = qarray.amplitude(self.satellite_v).flatten()
+        beta = vel / physcon.c
+        gamma=1/np.sqrt(1-beta**2)
+        cosdir = qarray.arraylist_dot(qarray.norm(self.satellite_v), vec).flatten()
+        T_dipole_CMB = T_CMB / (gamma * ( 1 - beta * cosdir ))
         if self.K_CMB:
             return T_dipole_CMB - T_CMB
         else:
