@@ -74,7 +74,7 @@ def doppler_factor(v):
     return np.sqrt((1+beta)/(1-beta))
 
 def load_ephemerides(file='/home/zonca/p/testenv/eph/eph.txt'):
-    '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, convertes Km to m,
+    '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, converts Km to m,
     saves to npy file'''
     l.debug('Loading ephemerides from %s' % file)
     npyfile = file.replace('txt','npy')
