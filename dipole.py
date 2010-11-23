@@ -6,7 +6,7 @@ import math
 import physcon
 from exceptions import IOError
 
-from healpy.pixelfunc import ang2vec, vec2ang
+import healpy
 
 import quaternionarray as qarray
 
@@ -41,8 +41,8 @@ def relativistic_add(v,u):
 
 #solar system speed vector
 # ONE
-SOLSYSDIR_ECL_THETA = 1.7678013480275747
-SOLSYSDIR_ECL_PHI = 3.0039153062803194
+#SOLSYSDIR_ECL_THETA = 1.7678013480275747
+#SOLSYSDIR_ECL_PHI = 3.0039153062803194
 # TWO
 #SOLSYSDIR_ECL_THETA = 1.765248346
 #SOLSYSDIR_ECL_PHI = 2.995840906
@@ -53,16 +53,16 @@ SOLSYSSPEED = 371000.0
 #SOLSYSSPEED = 369e3
 ## direction in galactic coordinates
 ##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
-#SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
-#SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
-#SOLSYSSPEED_GAL_U = ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
-#SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
-#SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
-#SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = vec2ang(SOLSYSSPEED_ECL_U)
-#SOLSYSSPEED_V = SOLSYSSPEED * SOLSYSSPEED_ECL_U
+SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
+SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
+SOLSYSSPEED_GAL_U = healpy.ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
+SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
+SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
+SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = healpy.vec2ang(SOLSYSSPEED_ECL_U)
+SOLSYSSPEED_V = SOLSYSSPEED * SOLSYSSPEED_ECL_U
 ########## /WMAP5
 
-SOLSYSSPEED_V = SOLSYSSPEED * ang2vec(SOLSYSDIR_ECL_THETA,SOLSYSDIR_ECL_PHI)
+SOLSYSSPEED_V = SOLSYSSPEED * healpy.ang2vec(SOLSYSDIR_ECL_THETA,SOLSYSDIR_ECL_PHI)
 
 def jd2obt(jd):
      #ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
@@ -134,7 +134,7 @@ class Dipole(object):
         type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt, type='total', K_CMB=True, coord='G', lowmem=True):
+    def __init__(self, obt=None, type='total', K_CMB=True, coord='G', lowmem=True):
 
         self.satellite_velocity = SatelliteVelocity(coord=coord)
         if type == 'total':
@@ -142,7 +142,7 @@ class Dipole(object):
         elif type == 'total_classic':
             self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = False)
         elif type == 'solar_system':
-            self.satellite_v = self.satellite_velocity.solar_system_v(obt)
+            self.satellite_v = self.satellite_velocity.solar_system_v()
         elif type == 'orbital':
             self.satellite_v = self.satellite_velocity.orbital_v(obt)
             
@@ -160,12 +160,23 @@ class Dipole(object):
             T_dipole_RJ = ch.Planck_to_RJ( T_dipole_CMB ) - ch.Planck_to_RJ(T_CMB)
             return T_dipole_RJ
 
+
+def solar_system_dipole_map(nside=16):
+    pix = np.arange(healpy.nside2npix(nside),dtype=np.int)
+    vec = np.zeros([len(pix),3])
+    vec[:,0], vec[:,1], vec[:,2] = healpy.pix2vec(nside, pix)
+    dip = Dipole(type='solar_system', coord='G', lowmem=False)
+    dipole_tod = dip.get(None, vec)
+    m = np.zeros(len(pix))
+    m[pix] = dipole_tod
+    return m
+
 if __name__ == '__main__':
     obt = np.arange(1631280082, 1631280082 + 3600, 1/30.)
-    from planck import pointing, planck
+    from planck import pointing, Planck
 
     #channel
-    ch = planck.Planck()['LFI28M']
+    ch = Planck.Planck()['LFI28M']
 
     #pointing
     pnt = pointing.Pointing(obt)
