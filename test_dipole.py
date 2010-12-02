@@ -17,7 +17,7 @@ class TestDipole(unittest.TestCase):
         self.v = qarray.norm(np.array([ 5e3,  8e7,  9e6])) * physcon.c / 40
 
     def test_satellite_velocity(self):
-        np.testing.assert_array_almost_equal(SOLSYSSPEED_V, SatelliteVelocity(coord = 'E').solar_system_v())
+        np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
         
     def test_relativistic_add_norm(self):
         self.assertAlmostEqual(np.linalg.norm(relativistic_add(self.v1, self.v1*3)), (self.v1[0]+self.v1[0]*3)/(1+self.v1[0]*self.v1[0]*3/physcon.c**2))
