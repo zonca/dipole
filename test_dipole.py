@@ -40,6 +40,12 @@ class TestDipole(unittest.TestCase):
         res = 1/(1+np.dot(v,u)/c2)*(v+u/g+1/c2*(g/(1+g))*np.dot(v,u)*v)
         np.testing.assert_array_almost_equal(result, res[np.newaxis,:])
 
+    def test_relativistic_add_vec_duncan_hanson(self):
+        vs = np.array([-360148.44820513,   52867.15941346,  -71687.92583822]) # solsys velocity m/s
+        vo = np.array([ -3.05003755e+04,  -1.55395210e+01,  -7.79262783e+01])  # orbital velocity m/s
+        vpar = np.dot(vs, vo) / np.dot(vs,vs) * vs     #component of vo parallel to vs
+        vper = vo - vpar                                           #component of vo perpendicular to vs
+        np.testing.assert_array_almost_equal( (vs + vpar + np.sqrt(1.-np.dot(vs,vs)/(physcon.c*physcon.c))*vper)/(1.+np.dot(vs,vo)/(physcon.c*physcon.c)), relativistic_add(vs, vo).flatten())
 
 if __name__ == '__main__':
     # better to use nose
