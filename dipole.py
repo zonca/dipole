@@ -42,13 +42,6 @@ def relativistic_add(v,u):
     return (v + u_II + np.sqrt(1 - v2/c2) * u_I_) / (1 + v_dot_u/c2)
 
 #solar system speed vector
-# ONE
-#SOLSYSDIR_ECL_THETA = 1.7678013480275747
-#SOLSYSDIR_ECL_PHI = 3.0039153062803194
-# TWO
-#SOLSYSDIR_ECL_THETA = 1.765248346
-#SOLSYSDIR_ECL_PHI = 2.995840906
-#SOLSYSSPEED = 371000.0 
 
 ########## WMAP5  from: http://arxiv.org/abs/0803.0732
 # 369.0 +- .9 Km/s
