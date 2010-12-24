@@ -16,6 +16,15 @@ class TestDipole(unittest.TestCase):
         self.u = qarray.norm(np.array([ 4e4,  8e5,  9e6])) * physcon.c / 30
         self.v = qarray.norm(np.array([ 5e3,  8e7,  9e6])) * physcon.c / 40
 
+    def test_jd2obt(self):
+        # from horizon:
+        #2455117.500000000, A.D. 2009-Oct-13 00:00:00.0000
+        jd = 2455117.5
+        # from HFI:
+        # 1634083200997595094     13/10/2009 00:00:00    DOY      286
+        obt = 1634083200997595094 / 1e9
+        self.assertAlmostEqual(jd2obt(jd), obt, 0)
+
     def test_satellite_velocity(self):
         np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
         
