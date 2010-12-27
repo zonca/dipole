@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import healpy
 import unittest
 import physcon
 
@@ -25,7 +26,26 @@ class TestDipole(unittest.TestCase):
         obt = 1634083200997595094 / 1e9
         self.assertAlmostEqual(jd2obt(jd), obt, 0)
 
+    def test_solar_system_dipole(self):
+        #first sample of ring 4303
+        
+        theta = 33.736313919148174 #deg
+        phi = 180.67100354137608 #deg
+        vec = healpy.ang2vec(np.radians(theta), np.radians(phi))
+
+        #TODO complete
+
     def test_satellite_velocity(self):
+        # from Horizon
+        # 2455187.202083333, A.D. 2009-Dec-21 16:51:00.0000, -3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02,
+        jd = 2455187.202083333
+        horiz_vec = np.array([-3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02]) * 1e3
+        satvel = SatelliteVelocity(coord='E')
+        orbital_vec = satvel.orbital_v([jd2obt(jd)])
+        np.testing.assert_array_almost_equal(horiz_vec, orbital_vec.flatten())
+
+
+    def test_solsys_velocity(self):
         np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
         
     def test_relativistic_add_norm(self):
