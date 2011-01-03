@@ -9,8 +9,7 @@ import os
 sys.path.append(os.getcwd())
 from dipole import *
 
-class TestDipole(unittest.TestCase):
-    
+class TestJDRelAdd(unittest.TestCase):
     def setUp(self):
         #data
         self.v1 = np.array([ 6e7,  0,  0])
@@ -27,28 +26,6 @@ class TestDipole(unittest.TestCase):
         obt -= 1 #error?
         self.assertAlmostEqual(jd2obt(jd), obt, 0)
 
-    def test_solar_system_dipole(self):
-        #first sample of ring 4303
-        
-        theta = 33.736313919148174 #deg
-        phi = 180.67100354137608 #deg
-        vec = healpy.ang2vec(np.radians(theta), np.radians(phi))
-
-        #TODO complete
-
-    def test_satellite_velocity(self):
-        # from Horizon
-        # 2455187.202083333, A.D. 2009-Dec-21 16:51:00.0000, -3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02,
-        jd = 2455187.202083333
-        horiz_vec = np.array([-3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02]) * 1e3
-        satvel = SatelliteVelocity(coord='E')
-        orbital_vec = satvel.orbital_v([jd2obt(jd)])
-        np.testing.assert_array_almost_equal(horiz_vec, orbital_vec.flatten(), decimal = 4)
-
-
-    def test_solsys_velocity(self):
-        np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
-        
     def test_relativistic_add_norm(self):
         self.assertAlmostEqual(np.linalg.norm(relativistic_add(self.v1, self.v1*3)), (self.v1[0]+self.v1[0]*3)/(1+self.v1[0]*self.v1[0]*3/physcon.c**2))
 
@@ -76,6 +53,41 @@ class TestDipole(unittest.TestCase):
         vpar = np.dot(vs, vo) / np.dot(vs,vs) * vs     #component of vo parallel to vs
         vper = vo - vpar                                           #component of vo perpendicular to vs
         np.testing.assert_array_almost_equal( (vs + vpar + np.sqrt(1.-np.dot(vs,vs)/(physcon.c*physcon.c))*vper)/(1.+np.dot(vs,vo)/(physcon.c*physcon.c)), relativistic_add(vs, vo).flatten())
+
+class TestDipole(unittest.TestCase):
+    
+    def setUp(self):
+        #first sample of ring 4303
+        theta = 33.736313919148174 #deg
+        phi = 180.67100354137608 #deg
+        self.vec = healpy.ang2vec(np.radians(theta), np.radians(phi))
+
+        jd = 2455187.202083333 #see previous test
+        self.obt = [jd2obt(jd)]
+
+    def test_satellite_velocity(self):
+        # from Horizon
+        # 2455187.202083333, A.D. 2009-Dec-21 16:51:00.0000, -3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02,
+        jd = 2455187.202083333
+        horiz_vec = np.array([-3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02]) * 1e3
+        satvel = SatelliteVelocity(coord='E')
+        orbital_vec = satvel.orbital_v([jd2obt(jd)])
+        np.testing.assert_array_almost_equal(horiz_vec, orbital_vec.flatten(), decimal = 4)
+
+    def test_orbital_dipole(self):
+        #manually computed (see Dipole on joint wiki)
+        expected_dip = 153.365312527 / 1.e6
+        dip = Dipole(self.obt, type='orbital', coord='E')
+        dip_val = dip.get(None, self.vec)
+
+        self.assertAlmostEqual(expected_dip, dip_val)
+
+    def test_solar_system_dipole(self):
+        pass
+
+    def test_solsys_velocity(self):
+        np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
+        
 
 if __name__ == '__main__':
     # better to use nose
