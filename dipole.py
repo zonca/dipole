@@ -43,21 +43,24 @@ def relativistic_add(v,u):
 
 #solar system speed vector
 
-########## WMAP5  from: http://arxiv.org/abs/0803.0732
-# 369.0 +- .9 Km/s
-SOLSYSSPEED = 369e3
-## direction in galactic coordinates
-##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
-SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
-SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
-SOLSYSSPEED_GAL_U = healpy.ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
-SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
-SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
-SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = healpy.vec2ang(SOLSYSSPEED_ECL_U)
-########## /WMAP5
+def wmap5_parameters():
+    """WMAP5 solar system dipole parameters, 
+    from: http://arxiv.org/abs/0803.0732"""
+    # 369.0 +- .9 Km/s
+    SOLSYSSPEED = 369e3
+    ## direction in galactic coordinates
+    ##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
+    SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
+    SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
+    SOLSYSSPEED_GAL_U = healpy.ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
+    SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
+    SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
+    SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = healpy.vec2ang(SOLSYSSPEED_ECL_U)
+    ########## /WMAP5
+    return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
 
-def SOLSYSSPEED_V():
-    return SOLSYSSPEED * healpy.ang2vec(SOLSYSDIR_ECL_THETA,SOLSYSDIR_ECL_PHI)
+def compute_SOLSYSSPEED_V(norm, theta, phi):
+    return norm * healpy.ang2vec(theta,phi)
 
 def jd2obt(jd):
      #ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
@@ -89,9 +92,12 @@ def Planck_to_RJ(T,nu):
 class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
 
-    def __init__(self, coord='G'):
+    solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
+
+    def __init__(self, coord='G', ):
         self.eph = load_ephemerides()
         self.coord = coord
+        print(np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
             self.convert_coord = ecl2gal
         else:
@@ -117,7 +123,7 @@ class SatelliteVelocity(object):
         return self.convert_coord(vsat)
 
     def solar_system_v(self):
-        return self.convert_coord(SOLSYSSPEED_V())
+        return self.convert_coord(self.solar_system_v_ecl)
 
     def total_v(self, obt, relativistic=True):
         if relativistic:
@@ -133,9 +139,9 @@ class Dipole(object):
         type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt=None, type='total', K_CMB=True, coord='G', lowmem=True):
+    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = SatelliteVelocity(coord='G'), lowmem=True):
 
-        self.satellite_velocity = SatelliteVelocity(coord=coord)
+        self.satellite_velocity = satellite_velocity
         if type == 'total':
             self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = True)
         elif type == 'total_classic':

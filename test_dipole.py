@@ -68,26 +68,55 @@ class TestDipole(unittest.TestCase):
     def test_satellite_velocity(self):
         # from Horizon
         # 2455187.202083333, A.D. 2009-Dec-21 16:51:00.0000, -3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02,
-        jd = 2455187.202083333
         horiz_vec = np.array([-3.050037254295194E+01, -1.516941595027445E-02, -7.792438654080185E-02]) * 1e3
         satvel = SatelliteVelocity(coord='E')
-        orbital_vec = satvel.orbital_v([jd2obt(jd)])
+        orbital_vec = satvel.orbital_v(self.obt)
         np.testing.assert_array_almost_equal(horiz_vec, orbital_vec.flatten(), decimal = 4)
 
     def test_orbital_dipole(self):
         #manually computed (see Dipole on joint wiki)
         expected_dip = 153.365312527 / 1.e6
-        dip = Dipole(self.obt, type='orbital', coord='E')
+        dip = Dipole(self.obt, type='orbital', satellite_velocity=SatelliteVelocity(coord='E'))
         dip_val = dip.get(None, self.vec)
 
         self.assertAlmostEqual(expected_dip, dip_val)
 
-    def test_solar_system_dipole(self):
-        pass
 
     def test_solsys_velocity(self):
-        np.testing.assert_array_almost_equal(SOLSYSSPEED_V(), SatelliteVelocity(coord = 'E').solar_system_v())
+        np.testing.assert_array_almost_equal(SatelliteVelocity.solar_system_v_ecl, SatelliteVelocity(coord = 'E').solar_system_v())
         
+class TestSolSysDipole(unittest.TestCase):
+    """Requires the planck module and access to PLANCK RIMO"""
+
+    def setUp(self):
+        #first sample of ring 4303
+        theta = 33.736313919148174 #deg
+        phi = 180.67100354137608 #deg
+        self.vec = healpy.ang2vec(np.radians(theta), np.radians(phi))
+
+        jd = 2455187.202083333 #see previous test
+        self.obt = [jd2obt(jd)]
+
+        from planck import Planck
+        from testenv import hfidipole
+        self.Dipole = hfidipole.Dipole
+        self.ch = Planck.Planck()['100-4a']
+
+    def test_solar_system_dipole(self):
+        #manually computed (see Dipole on joint wiki)
+        expected_dip = 0.0012714435357161769
+        dip = self.Dipole(self.obt, type='solar_system', satellite_velocity=SatelliteVelocity(coord='E'))
+        dip_val = dip.get(self.ch, self.vec)[0]
+
+        self.assertAlmostEqual(expected_dip, dip_val)
+
+    def test_total_dipole(self):
+        #manually computed (see Dipole on joint wiki)
+        expected_dip = 0.0014246200343004389
+        dip = self.Dipole(self.obt, type='total', satellite_velocity=SatelliteVelocity(coord='E'))
+        dip_val = dip.get(self.ch, self.vec)[0]
+
+        self.assertAlmostEqual(expected_dip, dip_val)
 
 if __name__ == '__main__':
     # better to use nose
