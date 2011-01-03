@@ -68,7 +68,7 @@ def doppler_factor(v):
     beta=v/physcon.c
     return np.sqrt((1+beta)/(1-beta))
 
-def load_ephemerides(file='/home/zonca/p/testenv/eph/eph.txt'):
+def load_ephemerides(file='/home/zonca/p/testenv/eph/3min/3min.txt'):
     '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, converts Km to m,
     saves to npy file'''
     l.debug('Loading ephemerides from %s' % file)
@@ -76,7 +76,7 @@ def load_ephemerides(file='/home/zonca/p/testenv/eph/eph.txt'):
     try:
         eph = np.load(npyfile)
     except IOError:
-        eph = np.loadtxt(file, delimiter=',',usecols = (0,1,2,3),converters={0:jd2obt})
+        eph = np.loadtxt(file, delimiter=',',usecols = (0,2,3,4),converters={0:jd2obt})
         eph[:,1:] *= 1e3
         npyfile = file.replace('txt','npy')
         np.save(npyfile, eph)
@@ -98,16 +98,20 @@ class SatelliteVelocity(object):
             # no conversion
             self.convert_coord = lambda x:x
 
-    def orbital_v(self, obt):
+    def orbital_v(self, obt, interp='linear'):
         '''satellite velocity from Horizon Km/s sol sys bar mean ecliptic ref
         
         nearest value from 1 minute sampled Horizon data'''
         l.debug('Computing satellite speed')
 
-        # TODO linear interpolation
-        i_interp = np.interp(obt,self.eph[:,0],np.arange(len(self.eph[:,0])))
-        i_interp = i_interp.round().astype(np.int)
-        vsat = self.eph[i_interp,1:]
+        if interp == 'linear':
+            vsat = np.zeros([len(obt),3])
+            for col in range(3):
+                vsat[:,col] = np.interp(obt,self.eph[:,0],self.eph[:,col + 1])
+        else:
+            i_interp = np.interp(obt,self.eph[:,0],np.arange(len(self.eph[:,0])))
+            i_interp = i_interp.round().astype(np.int)
+            vsat = self.eph[i_interp,1:]
 
         l.debug('Computing satellite speed:done')
         return self.convert_coord(vsat)
