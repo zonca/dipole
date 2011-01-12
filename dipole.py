@@ -97,7 +97,8 @@ class SatelliteVelocity(object):
     def __init__(self, coord='G', ):
         self.eph = load_ephemerides()
         self.coord = coord
-        print(np.linalg.norm(self.solar_system_v_ecl))
+        l.info('Satellite Velocity: coord=%s' % coord)
+        l.warning('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
             self.convert_coord = ecl2gal
         else:
@@ -140,6 +141,8 @@ class Dipole(object):
     """
 
     def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = SatelliteVelocity(coord='G'), lowmem=True):
+
+        l.info('Dipole: type=%s' % type)
 
         self.satellite_velocity = satellite_velocity
         if type == 'total':
