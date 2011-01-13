@@ -98,7 +98,7 @@ class SatelliteVelocity(object):
         self.eph = load_ephemerides()
         self.coord = coord
         l.info('Satellite Velocity: coord=%s' % coord)
-        l.warning('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
+        l.debug('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
             self.convert_coord = ecl2gal
         else:
