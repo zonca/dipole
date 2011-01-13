@@ -140,7 +140,9 @@ class Dipole(object):
         type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = SatelliteVelocity(coord='G'), lowmem=True):
+    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = None, lowmem=True):
+        if not satellite_velocity:
+            satellite_velocity = SatelliteVelocity(coord='G')
 
         l.info('Dipole: type=%s' % type)
 
@@ -183,23 +185,3 @@ def solar_system_dipole_map(nside=16):
     m = np.zeros(len(pix))
     m[pix] = dipole_tod
     return m
-
-if __name__ == '__main__':
-    obt = np.arange(1631280082, 1631280082 + 3600, 1/30.)
-    from planck import pointing, Planck
-
-    #channel
-    ch = Planck.Planck()['LFI28M']
-
-    #pointing
-    pnt = pointing.Pointing(obt)
-    vec = pnt.get(ch)
-
-    #dipole
-    dip = Dipole(obt, type='total', K_CMB=True)
-    d = dip.get(ch, vec)
-
-    #plot
-    import matplotlib.pyplot as plt
-    plt.plot(obt, d, label='channel %s' % ch.tag)
-    plt.xlabel('OBT[s]'); plt.ylabel('Dipole K_CMB'); plt.grid()
