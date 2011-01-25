@@ -94,7 +94,7 @@ class SatelliteVelocity(object):
 
     solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
 
-    def __init__(self, coord='G', ):
+    def __init__(self, coord='G'):
         self.eph = load_ephemerides()
         self.coord = coord
         l.info('Satellite Velocity: coord=%s' % coord)
@@ -146,20 +146,16 @@ class Dipole(object):
 
         l.info('Dipole: type=%s' % type)
 
-        self.satellite_velocity = satellite_velocity
         if type == 'total':
-            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = True)
+            self.satellite_v = satellite_velocity.total_v(obt, relativistic = True)
         elif type == 'total_classic':
-            self.satellite_v = self.satellite_velocity.total_v(obt, relativistic = False)
+            self.satellite_v = satellite_velocity.total_v(obt, relativistic = False)
         elif type == 'solar_system':
-            self.satellite_v = self.satellite_velocity.solar_system_v()
+            self.satellite_v = satellite_velocity.solar_system_v()
         elif type == 'orbital':
-            self.satellite_v = self.satellite_velocity.orbital_v(obt)
+            self.satellite_v = satellite_velocity.orbital_v(obt)
             
         self.K_CMB = K_CMB
-
-        if lowmem:
-            del self.satellite_velocity
 
     def get(self, ch, vec):
         l.info('Computing dipole temperature')
