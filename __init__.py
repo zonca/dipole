@@ -19,9 +19,18 @@ l.debug('Using healpix ecl2gal')
 ecl2gal = np.array([[ -5.48824860e-02,  -9.93821033e-01,  -9.64762490e-02],
                     [  4.94116468e-01,  -1.10993846e-01,   8.62281440e-01],
                     [ -8.67661702e-01,  -3.46354000e-04,   4.97154957e-01]])
+eps = np.radians(23.452294 - 0.0130125 - 1.63889E-6 + 5.02778E-7)
+e2q =      [[1.,     0.    ,      0.         ],
+            [0., np.cos( eps ), -1. * np.sin( eps )], 
+            [0., np.sin( eps ),    np.cos( eps )   ]]
+
 import Quaternion
 QECL2GAL = Quaternion.Quat(ecl2gal).q
+QECL2EQ = Quaternion.Quat(e2q).q
 #              array([-0.37381694,  0.3341907 ,  0.64479285,  0.57690524])
+
+#ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
+JD_OBT_DAYDIFF = 2436204.5
 
 def ecl2gal(vec):
     return qarray.rotate(QECL2GAL , vec)
@@ -63,9 +72,10 @@ def compute_SOLSYSSPEED_V(norm, theta, phi):
     return norm * healpy.ang2vec(theta,phi)
 
 def jd2obt(jd):
-     #ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
-     daydiff = 2436204.5
-     return 3600 * 24 * (float(jd) - daydiff)
+    return 3600 * 24 * (float(jd) - JD_OBT_DAYDIFF)
+
+def obt2jd(obt):
+    return obt / 3600 / 24 + JD_OBT_DAYDIFF
 
 def doppler_factor(v):
     beta=v/physcon.c
@@ -94,9 +104,10 @@ class SatelliteVelocity(object):
 
     solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
 
-    def __init__(self, coord='G'):
+    def __init__(self, coord='G', interp='linear'):
         self.eph = load_ephemerides()
         self.coord = coord
+        self.interp = interp
         l.info('Satellite Velocity: coord=%s' % coord)
         l.debug('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
@@ -105,13 +116,13 @@ class SatelliteVelocity(object):
             # no conversion
             self.convert_coord = lambda x:x
 
-    def orbital_v(self, obt, interp='linear'):
+    def orbital_v(self, obt):
         '''satellite velocity from Horizon Km/s sol sys bar mean ecliptic ref
         
         nearest value from 1 minute sampled Horizon data'''
         l.debug('Computing satellite speed')
 
-        if interp == 'linear':
+        if self.interp == 'linear':
             vsat = np.zeros([len(obt),3])
             for col in range(3):
                 vsat[:,col] = np.interp(obt,self.eph[:,0],self.eph[:,col + 1])
