@@ -35,4 +35,4 @@ for m_b in [-1, 0, 1]:
             np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
             np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
             )
-dip *= np.sqrt(4*np.pi/3) * Dmax # (18) # -1.19476986e-06 WRONG!!
+dip *= np.sqrt(4*np.pi/3) * Dmax # (18) # 1.19476726e-06 WRONG!!
