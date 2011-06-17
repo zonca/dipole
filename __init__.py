@@ -176,7 +176,7 @@ class Dipole(object):
         beta = vel / physcon.c
         gamma=1/np.sqrt(1-beta**2)
         if maximum:
-            cosdir = 0
+            cosdir = 1
         else:
             cosdir = qarray.arraylist_dot(qarray.norm(self.satellite_v), vec).flatten()
         T_dipole_CMB = T_CMB / (gamma * ( 1 - beta * cosdir ))

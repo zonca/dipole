@@ -22,7 +22,7 @@ dip_val = dip.get(ch, vec)[0] # -0.0031704345024921032
 theta_dip, phi_dip = dip.get_theta_phi_dip(satellite_v) #  1.75322403  3.01457638
 
 # max dipole amplitude
-Dmax = np.abs(dip.get(ch, None, maximum=True)[0]) # 2.4341368325409007e-06
+Dmax = np.abs(dip.get(ch, None, maximum=True)[0]) # 0.0036446949082749036
 
 theta_bar, psi_bar = dip.get_psi_theta_bar(theta_dip, phi_dip, theta, phi) # 0.19149457  0.85664949 
 
@@ -35,4 +35,4 @@ for m_b in [-1, 0, 1]:
             np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
             np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
             )
-dip *= np.sqrt(4*np.pi/3) * Dmax # (18) # 1.19476726e-06 WRONG!!
+dip *= np.sqrt(4*np.pi/3) * Dmax # (18) # 0.00178896 WRONG
