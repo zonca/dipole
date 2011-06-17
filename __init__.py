@@ -5,6 +5,7 @@ import logging as l
 import math
 import physcon
 from exceptions import IOError
+from planck import private
 
 import healpy
 
@@ -168,13 +169,16 @@ class Dipole(object):
             
         self.K_CMB = K_CMB
 
-    def get(self, ch, vec):
+    def get(self, ch, vec, maximum=False):
         l.info('Computing dipole temperature')
         #T_dipole_CMB = doppler_factor(qarray.arraylist_dot(self.satellite_v,vec).flatten()) * T_CMB
         vel = qarray.amplitude(self.satellite_v).flatten()
         beta = vel / physcon.c
         gamma=1/np.sqrt(1-beta**2)
-        cosdir = qarray.arraylist_dot(qarray.norm(self.satellite_v), vec).flatten()
+        if maximum:
+            cosdir = 0
+        else:
+            cosdir = qarray.arraylist_dot(qarray.norm(self.satellite_v), vec).flatten()
         T_dipole_CMB = T_CMB / (gamma * ( 1 - beta * cosdir ))
         if self.K_CMB:
             return T_dipole_CMB - T_CMB
@@ -182,6 +186,45 @@ class Dipole(object):
             T_dipole_RJ = ch.Planck_to_RJ( T_dipole_CMB ) - ch.Planck_to_RJ(T_CMB)
             return T_dipole_RJ
 
+    def get_beamconv(self, ch, vec, psi):
+        """Beam convolution by Gary Prezeau"""
+        dip = np.zeros(len(vec)) 
+        theta, phi = healpy.vec2ang(vec)
+        theta_dip, phi_dip = self.get_theta_phi_dip(self.satellite_v)
+        theta_bar, psi_bar = self.get_psi_theta_bar(theta_dip, phi_dip, theta, phi)
+        d = d_matrix(theta_bar)
+        for m_b in [-1, 0, 1]:
+            dip += d[m_b] * (
+                    np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
+                    np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
+                    )
+        dip *= np.sqrt(4*np.pi/3) * self.get(ch,None, maximum=True) # (18)
+        return dip
+
+    @staticmethod
+    def get_theta_phi_dip(satellite_v):
+        theta_dip, phi_dip = healpy.vec2ang(qarray.norm(satellite_v))
+        return theta_dip, phi_dip
+
+    @staticmethod
+    def get_psi_theta_bar(theta_dip, phi_dip, theta, phi):
+        psi_bar = np.arctan( \
+                            1 / ( \
+            np.cos(theta) / np.tan(phi_dip - phi) + np.sin(theta) / (np.tan(theta_dip) * np.sin(phi_dip - phi)) \
+                                ) \
+                           ) # (15) 
+        theta_bar = np.arccos( \
+            np.cos(theta) * np.cos(theta_dip) - np.sin(theta) * np.sin(theta_dip) * np.cos(phi_dip - phi) \
+                             ) # (16)
+        return theta_bar, psi_bar
+
+def d_matrix(beta):
+    """d -1 0, d 0 0, d 1 0"""
+    d = {}
+    d[-1] = np.sin(beta)/np.sqrt(2) #d -1 0
+    d[0] = np.cos(beta) #d 0 0
+    d[1] = -np.sin(beta)/np.sqrt(2) #d 1 0
+    return d
 
 def solar_system_dipole_map(nside=16):
     pix = np.arange(healpy.nside2npix(nside),dtype=np.int)

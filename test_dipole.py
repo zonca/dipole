@@ -81,7 +81,6 @@ class TestDipole(unittest.TestCase):
 
         self.assertAlmostEqual(expected_dip, dip_val)
 
-
     def test_solsys_velocity(self):
         np.testing.assert_array_almost_equal(SatelliteVelocity.solar_system_v_ecl, SatelliteVelocity(coord = 'E').solar_system_v())
         
