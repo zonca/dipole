@@ -16,6 +16,7 @@ sv = SatelliteVelocity(coord='E')
 satellite_v = sv.total_v(obt)[0] # [390881.43499062,   49917.03170657,  -72694.92428924]
 
 dip = Dipole(obt, type='total', satellite_velocity=sv)
+# dipole amplitude with no beam
 dip_val = dip.get(ch, vec)[0] # -0.0031704345024921032
 
 # dipole direction
@@ -26,6 +27,7 @@ Dmax = np.abs(dip.get(ch, None, maximum=True)[0]) # 0.0036446949082749036
 
 theta_bar, psi_bar = dip.get_psi_theta_bar(theta_dip, phi_dip, theta, phi) # 0.19149457  0.85664949 
 
+#only d_x0 for x in -1,0,1
 d = d_matrix(theta_bar) # {-1: array([ 0.13458106]), 0: array([ 0.98172088]), 1: array([-0.13458106])}
 
 # equation 18
