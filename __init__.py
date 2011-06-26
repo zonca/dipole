@@ -3,7 +3,7 @@ matplotlib.use('Agg')
 import numpy as np
 import logging as l
 import math
-import physcon
+import scipy.constants as physcon
 from exceptions import IOError
 from planck import private
 
@@ -25,9 +25,8 @@ e2q =      [[1.,     0.    ,      0.         ],
             [0., np.cos( eps ), -1. * np.sin( eps )], 
             [0., np.sin( eps ),    np.cos( eps )   ]]
 
-import Quaternion
-QECL2GAL = Quaternion.Quat(ecl2gal).q
-QECL2EQ = Quaternion.Quat(e2q).q
+QECL2GAL = qarray.from_rotmat(ecl2gal)
+QECL2EQ = qarray.from_rotmat(e2q)
 #              array([-0.37381694,  0.3341907 ,  0.64479285,  0.57690524])
 
 #ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
@@ -82,7 +81,7 @@ def doppler_factor(v):
     beta=v/physcon.c
     return np.sqrt((1+beta)/(1-beta))
 
-def load_ephemerides(file='/home/zonca/p/testenv/eph/3min/3min.txt'):
+def load_ephemerides(file='/project/projectdirs/planck/user/zonca/testenv/eph/3min/3min.txt'):
     '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, converts Km to m,
     saves to npy file'''
     l.debug('Loading ephemerides from %s' % file)
