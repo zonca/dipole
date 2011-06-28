@@ -214,7 +214,7 @@ class Dipole(object):
                                 ) \
                            ) # (15) 
         theta_bar = np.arccos( \
-            np.cos(theta) * np.cos(theta_dip) - np.sin(theta) * np.sin(theta_dip) * np.cos(phi_dip - phi) \
+            np.cos(theta) * np.cos(theta_dip) + np.sin(theta) * np.sin(theta_dip) * np.cos(phi_dip - phi) \
                              ) # (16)
         return theta_bar, psi_bar
 
