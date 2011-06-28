@@ -12,7 +12,9 @@ obt = np.array([jd2obt(jd)])
 ##### POINTING
 pnt = pointing.Pointing(obt, coord='E')
 theta,phi,psi=pnt.get_3ang(ch) # 1.88146617 0.0197575 -2.61200353
+phi += np.pi
 vec = pnt.get(ch)
+vec[0] = healpy.ang2vec(theta, phi)
 #theta = 0
 #phi = 0
 #psi = 0
@@ -45,7 +47,12 @@ d = d_matrix(theta_bar) # {-1: array([ 0.13458106]), 0: array([ 0.98172088]), 1:
 dip_beam = np.zeros(len(vec)) 
 for m_b in [-1, 0, 1]:
     dip_beam += d[m_b] * (
-            np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
-            np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
+            np.cos(m_b * (psi_bar - psi)) * (ch.get_beam_real(m_b) + ch.get_beam_real(m_b, 'farsidelobe')) -
+            np.sin(m_b * (psi_bar - psi)) * (ch.get_beam_imag(m_b) + ch.get_beam_imag(m_b, 'farsidelobe'))
             )
 dip_beam *= np.sqrt(4*np.pi/3) * Dmax # (18) # 0.00178896 WRONG
+
+print
+print('NOBEAM dipole %.3f mK' % (dip_val*1e3))
+print('BEAM dipole %.3f mK' % (dip_beam[0]*1e3))
+print('Decrease %.3f%%' % (100 - dip_beam[0]/dip_val * 100))
