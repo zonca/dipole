@@ -13,6 +13,9 @@ obt = np.array([jd2obt(jd)])
 pnt = pointing.Pointing(obt, coord='E')
 theta,phi,psi=pnt.get_3ang(ch) # 1.88146617 0.0197575 -2.61200353
 vec = pnt.get(ch)
+#theta = 0
+#phi = 0
+#psi = 0
 
 ##### SATELLITE VEL
 sv = SatelliteVelocity(coord='E')
@@ -33,14 +36,16 @@ Dmax = np.abs(dip.get(ch, None, maximum=True)[0]) # 0.0036446949082749036
 
 theta_bar, psi_bar = dip.get_psi_theta_bar(theta_dip, phi_dip, theta, phi) # 0.19149457  0.85664949  using (15) and (16)
 
+#theta_bar += np.pi
+
 #only d_x0 for x in -1,0,1
 d = d_matrix(theta_bar) # {-1: array([ 0.13458106]), 0: array([ 0.98172088]), 1: array([-0.13458106])}
 
 # equation 18
-dip = np.zeros(len(vec)) 
+dip_beam = np.zeros(len(vec)) 
 for m_b in [-1, 0, 1]:
-    dip += d[m_b] * (
+    dip_beam += d[m_b] * (
             np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
             np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
             )
-dip *= np.sqrt(4*np.pi/3) * Dmax # (18) # 0.00178896 WRONG
+dip_beam *= np.sqrt(4*np.pi/3) * Dmax # (18) # 0.00178896 WRONG

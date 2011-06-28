@@ -179,6 +179,7 @@ class Dipole(object):
         else:
             cosdir = qarray.arraylist_dot(qarray.norm(self.satellite_v), vec).flatten()
         T_dipole_CMB = T_CMB / (gamma * ( 1 - beta * cosdir ))
+        #T_dipole_CMB = T_CMB * (1 - beta * cosdir )
         if self.K_CMB:
             return T_dipole_CMB - T_CMB
         else:
