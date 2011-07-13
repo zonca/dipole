@@ -5,7 +5,6 @@ import logging as l
 import math
 import scipy.constants as physcon
 from exceptions import IOError
-from planck import private
 
 import healpy
 
