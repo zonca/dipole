@@ -50,9 +50,11 @@ for m_b in [-1, 0, 1]:
             np.cos(m_b * (psi_bar - psi)) * (ch.get_beam_real(m_b) + ch.get_beam_real(m_b, 'farsidelobe')) -
             np.sin(m_b * (psi_bar - psi)) * (ch.get_beam_imag(m_b) + ch.get_beam_imag(m_b, 'farsidelobe'))
             )
-dip_beam *= np.sqrt(4*np.pi/3) * Dmax # (18) # 0.00178896 WRONG
+dip_beam *= np.sqrt(4*np.pi/3) * Dmax # (18) 
 
 print
 print('NOBEAM dipole %.3f mK' % (dip_val*1e3))
 print('BEAM dipole %.3f mK' % (dip_beam[0]*1e3))
+print('BEAMFUNC dipole %.3f mK' % (dip.get_beamconv(ch, vec, psi)[0]*1e3))
+print('BEAMFUNC dipole NO FSL %.3f mK' % (dip.get_beamconv(ch, vec, psi, False)[0]*1e3))
 print('Decrease %.3f%%' % (100 - dip_beam[0]/dip_val * 100))

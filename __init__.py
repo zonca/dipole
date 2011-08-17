@@ -56,6 +56,8 @@ def wmap5_parameters():
     from: http://arxiv.org/abs/0803.0732"""
     # 369.0 +- .9 Km/s
     SOLSYSSPEED = 369e3
+    l.critical('USING 371')
+    SOLSYSSPEED = 371e3
     ## direction in galactic coordinates
     ##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
     SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
@@ -95,7 +97,7 @@ def load_ephemerides(file='/project/projectdirs/planck/user/zonca/testenv/eph/3m
     return eph
     
 def Planck_to_RJ(T,nu):
-    h_nu_over_k = physcon.h * nu / physcon.k_B
+    h_nu_over_k = physcon.h * nu / physcon.k
     return h_nu_over_k / ( np.exp(h_nu_over_k / T)-1)
 
 class SatelliteVelocity(object):
@@ -150,9 +152,9 @@ class Dipole(object):
         type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = None, lowmem=True):
+    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = None, lowmem=True, coord='G'):
         if not satellite_velocity:
-            satellite_velocity = SatelliteVelocity(coord='G')
+            satellite_velocity = SatelliteVelocity(coord=coord)
 
         l.info('Dipole: type=%s' % type)
 
@@ -185,7 +187,7 @@ class Dipole(object):
             T_dipole_RJ = ch.Planck_to_RJ( T_dipole_CMB ) - ch.Planck_to_RJ(T_CMB)
             return T_dipole_RJ
 
-    def get_beamconv(self, ch, vec, psi):
+    def get_beamconv(self, ch, vec, psi, farsidelobes=True):
         """Beam convolution by Gary Prezeau"""
         dip = np.zeros(len(vec)) 
         theta, phi = healpy.vec2ang(vec)
@@ -194,8 +196,10 @@ class Dipole(object):
         d = d_matrix(theta_bar)
         for m_b in [-1, 0, 1]:
             dip += d[m_b] * (
-                    np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
-                    np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
+                    #np.cos(m_b * (psi_bar - psi)) * ch.get_beam_real(m_b) -
+                    #np.sin(m_b * (psi_bar - psi)) * ch.get_beam_imag(m_b)
+            np.cos(m_b * (psi_bar - psi)) * (ch.get_beam_real(m_b) + farsidelobes * ch.get_beam_real(m_b, 'farsidelobe')) -
+            np.sin(m_b * (psi_bar - psi)) * (ch.get_beam_imag(m_b) + farsidelobes * ch.get_beam_imag(m_b, 'farsidelobe'))
                     )
         dip *= np.sqrt(4*np.pi/3) * self.get(ch,None, maximum=True) # (18)
         return dip

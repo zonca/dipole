@@ -13,7 +13,7 @@ TOLERANCE = 3e-5
 '''Test vs LFI DPC dipole OD100 LFI28M'''
 obtx = np.load('/u/zonca/p/testenv/dipdpc/obt.npy') / 2**16
 dipx = np.load('/u/zonca/p/testenv/dipdpc/dip.npy')
-read_exchange([ch], ods = [100], discard_flag = True)
+read_exchange([ch], ods = [100], discard_flag = True, type='C')
 span = 32.5 * 60 * 10
 obt = ch.f.obtx[:span]
 pnt = Pointing(obt,coord='G')
