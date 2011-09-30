@@ -56,8 +56,8 @@ def wmap5_parameters():
     from: http://arxiv.org/abs/0803.0732"""
     # 369.0 +- .9 Km/s
     SOLSYSSPEED = 369e3
-    l.critical('USING 371')
-    SOLSYSSPEED = 371e3
+    #l.critical('USING 371')
+    #SOLSYSSPEED = 371e3
     ## direction in galactic coordinates
     ##(d, l, b) = (3.355 +- 0.008 mK,263.99 +- 0.14,48.26deg +- 0.03)
     SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )

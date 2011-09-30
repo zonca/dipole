@@ -53,8 +53,8 @@ for m_b in [-1, 0, 1]:
 dip_beam *= np.sqrt(4*np.pi/3) * Dmax # (18) 
 
 print
-print('NOBEAM dipole %.3f mK' % (dip_val*1e3))
-print('BEAM dipole %.3f mK' % (dip_beam[0]*1e3))
-print('BEAMFUNC dipole %.3f mK' % (dip.get_beamconv(ch, vec, psi)[0]*1e3))
-print('BEAMFUNC dipole NO FSL %.3f mK' % (dip.get_beamconv(ch, vec, psi, False)[0]*1e3))
+print('NOBEAM dipole %.4f mK' % (dip_val*1e3))
+print('BEAM dipole %.4f mK' % (dip_beam[0]*1e3))
+print('BEAMFUNC dipole %.4f mK' % (dip.get_beamconv(ch, vec, psi)[0]*1e3))
+print('BEAMFUNC dipole NO FSL %.4f mK' % (dip.get_beamconv(ch, vec, psi, False)[0]*1e3))
 print('Decrease %.3f%%' % (100 - dip_beam[0]/dip_val * 100))
