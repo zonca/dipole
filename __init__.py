@@ -1,14 +1,18 @@
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import logging as l
 import math
-import scipy.constants as physcon
 from exceptions import IOError
 
 import healpy
 
 import quaternionarray as qarray
+
+class DummyClass:
+    pass
+physcon = DummyClass()
+physcon.k = 1.380650400000e-23
+physcon.c = 2.997924580000e+08
+physcon.h = 6.626068960000e-34
 
 T_CMB = 2.725
 

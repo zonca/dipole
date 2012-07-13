@@ -2,7 +2,13 @@ from __future__ import division
 import numpy as np
 import healpy
 import unittest
-import physcon
+
+class DummyClass:
+    pass
+physcon = DummyClass()
+physcon.k = 1.380650400000e-23
+physcon.c = 2.997924580000e+08
+physcon.h = 6.626068960000e-34
 
 import sys
 import os
@@ -97,8 +103,7 @@ class TestSolSysDipole(unittest.TestCase):
         self.obt = [jd2obt(jd)]
 
         from planck import Planck
-        from testenv import hfidipole
-        self.Dipole = hfidipole.Dipole
+        self.Dipole = Dipole
         self.ch = Planck.Planck()['100-4a']
 
     def test_solar_system_dipole(self):
