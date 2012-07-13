@@ -172,6 +172,10 @@ class Dipole(object):
             self.satellite_v = satellite_velocity.orbital_v(obt)
             
         self.K_CMB = K_CMB
+        
+        self.beam_sum = {}
+        for row in np.loadtxt("4pidipbeam.csv",delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3))]):
+            self.beam_sum[row['tag']] = row['s'].flatten()
 
     def get(self, ch, vec, maximum=False):
         l.info('Computing dipole temperature')
@@ -190,6 +194,24 @@ class Dipole(object):
         else:
             T_dipole_RJ = ch.Planck_to_RJ( T_dipole_CMB ) - ch.Planck_to_RJ(T_CMB)
             return T_dipole_RJ
+
+    def get_4piconv(self, ch, theta, phi, psi):
+        l.info('Computing dipole temperature with 4pi convolver')
+        vel = qarray.amplitude(self.satellite_v).flatten()
+        beta = vel / physcon.c
+        unit_vel = self.satellite_v/vel
+        # rotate vel to ecliptic
+        # phi around z
+        ecl_rotation = qarray.rotation(phi, [0,0,1])
+        # theta around y
+        ecl_rotation = qarray.rotation(theta, [0,1,0]) * ecl_rotation
+        # psi around z
+        ecl_rotation = qarray.rotation(psi, [0,0,1]) * ecl_rotation
+        # vel in beam ref frame
+        vel_rad = qarray.rotate(ecl_rotation, unit_vel)
+
+        cosdir = qarray.arraylist_dot(vel_rad, self.beam_sum[ch.tag])
+        return beta * cosdir * T_CMB
 
     def get_beamconv(self, ch, vec, psi, farsidelobes=True):
         """Beam convolution by Gary Prezeau"""

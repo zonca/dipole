@@ -122,6 +122,13 @@ class TestSolSysDipole(unittest.TestCase):
 
         self.assertAlmostEqual(expected_dip, dip_val)
 
+class Test4piconv(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_4pi_conv(self):
+        
 if __name__ == '__main__':
     # better to use nose
     unittest.main()
