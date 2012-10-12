@@ -174,8 +174,8 @@ class Dipole(object):
         self.K_CMB = K_CMB
         
         self.beam_sum = {}
-        for row in np.loadtxt("4pidipbeam.csv",delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3))]):
-            self.beam_sum[row['tag']] = row['s'].flatten()
+        for row in np.loadtxt("/project/projectdirs/planck/user/zonca/dev/dipole/4pidipbeam.csv",delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3)),('S',np.double)]):
+            self.beam_sum[row['tag']] = row['s'].flatten() # * row['S'] # fix for delta dx9
 
     def get(self, ch, vec, maximum=False):
         l.info('Computing dipole temperature')
@@ -199,19 +199,29 @@ class Dipole(object):
         l.info('Computing dipole temperature with 4pi convolver')
         vel = qarray.amplitude(self.satellite_v).flatten()
         beta = vel / physcon.c
-        unit_vel = self.satellite_v/vel
+        gamma = 1./np.sqrt(1-beta**2)
+        unit_vel = self.satellite_v/vel[:,None]
+        # remove psi_pol
+        psi_nopol = psi - np.radians(ch.get_instrument_db_field("psi_pol"))
         # rotate vel to ecliptic
         # phi around z
-        ecl_rotation = qarray.rotation(phi, [0,0,1])
+        #ecl_rotation = qarray.rotation([0,0,1], -phi)
         # theta around y
-        ecl_rotation = qarray.rotation(theta, [0,1,0]) * ecl_rotation
+        ecl_rotation = qarray.norm( qarray.mult(
+            qarray.rotation([0,0,1], -psi_nopol) ,
+            qarray.mult(
+                        qarray.rotation([0,1,0], -theta) , 
+                        qarray.rotation([0,0,1], -phi)
+                       )
+            ))
         # psi around z
-        ecl_rotation = qarray.rotation(psi, [0,0,1]) * ecl_rotation
+        #ecl_rotation = qarray.mult(qarray.rotation([0,0,1], -psi) , ecl_rotation)
         # vel in beam ref frame
         vel_rad = qarray.rotate(ecl_rotation, unit_vel)
 
-        cosdir = qarray.arraylist_dot(vel_rad, self.beam_sum[ch.tag])
-        return beta * cosdir * T_CMB
+        cosdir = qarray.arraylist_dot(vel_rad, self.beam_sum[ch.tag]).flatten()
+        #return beta * cosdir * T_CMB
+        return (1. / ( gamma * (1 - beta * cosdir ) ) - 1) * T_CMB
 
     def get_beamconv(self, ch, vec, psi, farsidelobes=True):
         """Beam convolution by Gary Prezeau"""
