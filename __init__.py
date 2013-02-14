@@ -195,14 +195,18 @@ class Dipole(object):
             T_dipole_RJ = ch.Planck_to_RJ( T_dipole_CMB ) - ch.Planck_to_RJ(T_CMB)
             return T_dipole_RJ
 
-    def get_4piconv(self, ch, theta, phi, psi):
+    def get_4piconv(self, ch, theta, phi, psi, horn_pointing=False):
         l.info('Computing dipole temperature with 4pi convolver')
         vel = qarray.amplitude(self.satellite_v).flatten()
         beta = vel / physcon.c
         gamma = 1./np.sqrt(1-beta**2)
         unit_vel = self.satellite_v/vel[:,None]
-        # remove psi_pol
-        psi_nopol = psi - np.radians(ch.get_instrument_db_field("psi_pol"))
+        if horn_pointing: # psi comes from the S channel, so there is no need 
+        # to remove psi_pol
+            psi_nopol = psi
+        else:
+            # remove psi_pol
+            psi_nopol = psi - np.radians(ch.get_instrument_db_field("psi_pol"))
         # rotate vel to ecliptic
         # phi around z
         #ecl_rotation = qarray.rotation([0,0,1], -phi)
