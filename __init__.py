@@ -243,7 +243,7 @@ class Dipole(object):
         #return beta * cosdir * T_CMB
         return (1. / ( gamma * (1 - beta * cosdir ) ) - 1) * T_CMB
 
-    def get_4piconv_dx10(self, ch, theta, phi, psi, horn_pointing=False):
+    def get_4piconv_dx10(self, ch, theta, phi, psi):
         l.info('Computing dipole temperature with 4pi convolver')
         rel_vel = self.satellite_v/physcon.c
         # remove psi_pol
