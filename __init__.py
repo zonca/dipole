@@ -1,6 +1,7 @@
 import numpy as np
+import pandas as pd
 import logging as l
-import math
+import os.path
 from exceptions import IOError
 
 import healpy
@@ -35,6 +36,13 @@ QECL2EQ = qarray.from_rotmat(e2q)
 #ephem.Date('1958/1/1 00:00')-ephem.Date('-4713/1/1 12:00:0')
 JD_OBT_DAYDIFF = 2436204.5
 
+def compute_dipole_from_vel(vel):
+    beta = vel / physcon.c
+    gamma=1/np.sqrt(1-beta**2)
+    cosdir = 1
+    T_dipole_CMB = T_CMB / (gamma * ( 1 - beta * cosdir ))
+    return T_dipole_CMB - T_CMB
+
 def ecl2gal(vec):
     return qarray.rotate(QECL2GAL , vec)
 
@@ -67,7 +75,7 @@ def wmap5_parameters():
     SOLSYSDIR_GAL_THETA = np.deg2rad( 90 - 48.26 )
     SOLSYSDIR_GAL_PHI = np.deg2rad( 263.99 )
     SOLSYSSPEED_GAL_U = healpy.ang2vec(SOLSYSDIR_GAL_THETA,SOLSYSDIR_GAL_PHI)
-    SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
+    #SOLSYSSPEED_GAL_V = SOLSYSSPEED * SOLSYSSPEED_GAL_U
     SOLSYSSPEED_ECL_U = gal2ecl(SOLSYSSPEED_GAL_U)
     SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = healpy.vec2ang(SOLSYSSPEED_ECL_U)
     ########## /WMAP5
@@ -86,10 +94,14 @@ def doppler_factor(v):
     beta=v/physcon.c
     return np.sqrt((1+beta)/(1-beta))
 
-def load_ephemerides(file='/project/projectdirs/planck/user/zonca/testenv/eph/3min/3min.txt'):
+def load_ephemerides(file=None):
     '''Loads horizon ephemerides from CSV file, converts Julian Date to OBT, converts Km to m,
     saves to npy file'''
+    if file is None:
+        from planck import private
+        file = private.ephem_file
     l.debug('Loading ephemerides from %s' % file)
+
     npyfile = file.replace('txt','npy')
     try:
         eph = np.load(npyfile)
@@ -174,8 +186,12 @@ class Dipole(object):
         self.K_CMB = K_CMB
         
         self.beam_sum = {}
-        for row in np.loadtxt("/project/projectdirs/planck/user/zonca/dev/dipole/4pidipbeam.csv",delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3)),('S',np.double)]):
+        for row in np.loadtxt(os.path.join(os.path.dirname(__file__), "4pidipbeam.csv"),delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3)),('S',np.double)]):
             self.beam_sum[row['tag']] = row['s'].flatten() # * row['S'] # fix for delta dx9
+
+        fourpi = pd.read_csv("/global/homes/z/zonca/p/dev/dipole/e4pi_coeff_ba_qucs_by_radiometer_dx10_power=00_v3.csv")
+        fourpi["chtag"] = ["LFI%d%s" % (fh, arm) for fh, arm in zip(fourpi.fh, fourpi.polarization)]
+        self.fourpi=fourpi.set_index("chtag")
 
     def get(self, ch, vec, maximum=False):
         l.info('Computing dipole temperature')
@@ -227,6 +243,34 @@ class Dipole(object):
         #return beta * cosdir * T_CMB
         return (1. / ( gamma * (1 - beta * cosdir ) ) - 1) * T_CMB
 
+    def get_4piconv_dx10(self, ch, theta, phi, psi, horn_pointing=False):
+        l.info('Computing dipole temperature with 4pi convolver')
+        rel_vel = self.satellite_v/physcon.c
+        # remove psi_pol
+        psi_nopol = psi - np.radians(ch.get_instrument_db_field("psi_pol"))
+        # rotate vel to horn reference frame
+        tohorn_rotation = qarray.norm( qarray.mult(
+            qarray.rotation([0,0,1], -psi_nopol) ,
+            qarray.mult(
+                        qarray.rotation([0,1,0], -theta) , 
+                        qarray.rotation([0,0,1], -phi)
+                       )
+            ))
+        # vel in beam ref frame
+        vel_rad = qarray.rotate(tohorn_rotation, rel_vel)
+
+        dipole_amplitude = self.get_fourpi_prod(vel_rad, ["S100", "S010", "S001"], ch)
+
+        relativistic_correction = \
+            vel_rad[:,0] * self.get_fourpi_prod(vel_rad, ["S200", "S110", "S101"], ch) + \
+            vel_rad[:,1] * self.get_fourpi_prod(vel_rad, ["S110", "S020", "S011"], ch) + \
+            vel_rad[:,2] * self.get_fourpi_prod(vel_rad, ["S101", "S011", "S002"], ch)
+
+        return (dipole_amplitude + relativistic_correction/2) * T_CMB
+
+    def get_fourpi_prod(self, vel_rad, comps, ch):
+        return qarray.arraylist_dot(vel_rad, [self.fourpi[comp][ch.tag] for comp in comps]).flatten()
+
     def get_beamconv(self, ch, vec, psi, farsidelobes=True):
         """Beam convolution by Gary Prezeau"""
         dip = np.zeros(len(vec)) 
@@ -269,12 +313,17 @@ def d_matrix(beta):
     d[1] = -np.sin(beta)/np.sqrt(2) #d 1 0
     return d
 
-def solar_system_dipole_map(nside=16):
+def solar_system_dipole_map(nside=16, nest=False):
     pix = np.arange(healpy.nside2npix(nside),dtype=np.int)
     vec = np.zeros([len(pix),3])
-    vec[:,0], vec[:,1], vec[:,2] = healpy.pix2vec(nside, pix)
+    vec[:,0], vec[:,1], vec[:,2] = healpy.pix2vec(nside, pix, nest=nest)
     dip = Dipole(type='solar_system', coord='G', lowmem=False)
     dipole_tod = dip.get(None, vec)
     m = np.zeros(len(pix))
     m[pix] = dipole_tod
     return m
+
+def solar_dipole_fit(s):
+    import healpy as hp
+    dipmap = solar_system_dipole_map(nside=hp.npix2nside(len(s)))
+    return np.sum(s.filled() * np.logical_not(s.mask) * dipmap)/np.sum(dipmap ** 2 * np.logical_not(s.mask))
