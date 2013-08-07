@@ -261,12 +261,12 @@ class Dipole(object):
 
         dipole_amplitude = self.get_fourpi_prod(vel_rad, ["S100", "S010", "S001"], ch)
 
-        relativistic_correction = \
-            vel_rad[:,0] * self.get_fourpi_prod(vel_rad, ["S200", "S110", "S101"], ch) + \
-            vel_rad[:,1] * self.get_fourpi_prod(vel_rad, ["S110", "S020", "S011"], ch) + \
-            vel_rad[:,2] * self.get_fourpi_prod(vel_rad, ["S101", "S011", "S002"], ch)
+        # relative corrections
+        dipole_amplitude += vel_rad[:,0] * self.get_fourpi_prod(vel_rad, ["S200", "S110", "S101"], ch)/2
+        dipole_amplitude += vel_rad[:,1] * self.get_fourpi_prod(vel_rad, ["S110", "S020", "S011"], ch)/2
+        dipole_amplitude += vel_rad[:,2] * self.get_fourpi_prod(vel_rad, ["S101", "S011", "S002"], ch)/2
 
-        return (dipole_amplitude + relativistic_correction/2) * T_CMB
+        return dipole_amplitude * T_CMB
 
     def get_fourpi_prod(self, vel_rad, comps, ch):
         return qarray.arraylist_dot(vel_rad, [self.fourpi[comp][ch.tag] for comp in comps]).flatten()
