@@ -284,4 +284,4 @@ def solar_system_dipole_map(nside=16, nest=False):
 def solar_dipole_fit(s):
     import healpy as hp
     dipmap = solar_system_dipole_map(nside=hp.npix2nside(len(s)))
-    return np.sum(s.filled() * np.logical_not(s.mask) * dipmap)/np.sum(dipmap ** 2 * np.logical_not(s.mask))
+    return np.sum(hp.remove_monopole(s.filled(), gal_cut=30) * np.logical_not(s.mask) * dipmap)/np.sum(dipmap ** 2 * np.logical_not(s.mask))
