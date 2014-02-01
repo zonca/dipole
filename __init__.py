@@ -139,7 +139,7 @@ class SatelliteVelocity(object):
         if dipole_vector_galactic:
             self.solar_system_v_ecl = gal2ecl(dipole_vector_galactic)
         else:
-            self.solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
+            self.solar_system_v_ecl = compute_SOLSYSSPEED_V(*lfi_parameters())
         l.info('Satellite Velocity: coord=%s' % coord)
         l.debug('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
