@@ -81,6 +81,12 @@ def wmap5_parameters():
     ########## /WMAP5
     return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
 
+def dipole_parameters_galactic_to_ecl_amp_ang(dipole_vector_galactic):
+    dipole_vector_ecliptic = gal2ecl(dipole_vector_galactic)
+    SOLSYSSPEED = np.linalg.norm(dipole_vector_ecliptic)
+    SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = healpy.vec2ang(dipole_vector_ecliptic/SOLSYSSPEED)
+    return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
+
 def compute_SOLSYSSPEED_V(norm, theta, phi):
     return norm * healpy.ang2vec(theta,phi)
 
@@ -119,12 +125,15 @@ def Planck_to_RJ(T,nu):
 class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
 
-    solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
 
-    def __init__(self, coord='G', interp='linear'):
+    def __init__(self, coord='G', interp='linear', dipole_vector_galactic=None):
         self.eph = load_ephemerides()
         self.coord = coord
         self.interp = interp
+        if dipole_vector_galactic:
+            self.solar_system_v_ecl = gal2ecl(dipole_vector_galactic)
+        else:
+            self.solar_system_v_ecl = compute_SOLSYSSPEED_V(*wmap5_parameters())
         l.info('Satellite Velocity: coord=%s' % coord)
         l.debug('Dipole solar system speed: %.2f' % np.linalg.norm(self.solar_system_v_ecl))
         if self.coord == 'G':
@@ -168,9 +177,9 @@ class Dipole(object):
         type: 'total', 'total_classic', 'solar_system', 'orbital'
     """
 
-    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = None, lowmem=True, coord='G'):
+    def __init__(self, obt=None, type='total', K_CMB=True, satellite_velocity = None, lowmem=True, coord='G', dipole_vector_galactic=None):
         if not satellite_velocity:
-            satellite_velocity = SatelliteVelocity(coord=coord)
+            satellite_velocity = SatelliteVelocity(coord=coord, dipole_vector_galactic=dipole_vector_galactic)
 
         l.info('Dipole: type=%s' % type)
 
@@ -271,11 +280,11 @@ class Dipole(object):
     def get_fourpi_prod(self, vel_rad, comps, ch):
         return qarray.arraylist_dot(vel_rad, [self.fourpi[comp][ch.tag] for comp in comps]).flatten()
 
-def solar_system_dipole_map(nside=16, nest=False):
+def solar_system_dipole_map(nside=16, nest=False, dipole_vector_galactic=None):
     pix = np.arange(healpy.nside2npix(nside),dtype=np.int)
     vec = np.zeros([len(pix),3])
     vec[:,0], vec[:,1], vec[:,2] = healpy.pix2vec(nside, pix, nest=nest)
-    dip = Dipole(type='solar_system', coord='G', lowmem=False)
+    dip = Dipole(type='solar_system', coord='G', lowmem=False, dipole_vector_galactic=dipole_vector_galactic)
     dipole_tod = dip.get(None, vec)
     m = np.zeros(len(pix))
     m[pix] = dipole_tod
