@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 import logging as l
 import os.path
-from exceptions import IOError
+try:
+    from exceptions import IOError
+except:
+    pass
 
 import healpy
 
