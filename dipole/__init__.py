@@ -207,8 +207,9 @@ class Dipole(object):
         for row in np.loadtxt(os.path.join(os.path.dirname(__file__), "4pidipbeam.csv"),delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3)),('S',np.double)]):
             self.beam_sum[row['tag']] = row['s'].flatten() # * row['S'] # fix for delta dx9
 
-        fourpi = pd.read_csv("/global/homes/z/zonca/p/dev/dipole/e4pi_coeff_ba_qucs_by_diode_dx11_power=00_noalpha_v4.csv")
-        fourpi["chtag"] = ["LFI%d%s" % (fh, arm) for fh, arm in zip(fourpi.fh, fourpi.polarization)]
+        #fourpi = pd.read_csv("/global/homes/z/zonca/p/dev/dipole/e4pi_coeff_ba_qucs_by_diode_dx11_power=00_noalpha_v4.csv")
+        fourpi = pd.read_csv("/global/homes/z/zonca/p/dev/dipole/DX12_dBdTcmb_release_S_param.csv")
+        fourpi["chtag"] = ["LFI%d%s" % (fh, arm[0]) for fh, arm in zip(fourpi.horn, fourpi.det)]
         self.fourpi=fourpi.set_index("chtag")
 
     def get(self, ch, vec, maximum=False):
