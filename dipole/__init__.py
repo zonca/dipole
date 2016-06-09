@@ -140,12 +140,14 @@ class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
 
 
-    def __init__(self, coord='G', interp='linear', dipole_vector_galactic=None):
+    def __init__(self, coord='G', interp='linear', dipole_vector_galactic=None, speed=None, theta_ecl=None, phi_ecl=None):
         self.eph = load_ephemerides()
         self.coord = coord
         self.interp = interp
         if dipole_vector_galactic:
             self.solar_system_v_ecl = gal2ecl(dipole_vector_galactic)
+        elif speed:
+            self.solar_system_v_ecl = compute_SOLSYSSPEED_V(speed, theta_ecl, phi_ecl)
         else:
             self.solar_system_v_ecl = compute_SOLSYSSPEED_V(*lfi_parameters())
         l.info('Satellite Velocity: coord=%s' % coord)
