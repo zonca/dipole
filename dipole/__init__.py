@@ -85,9 +85,14 @@ def wmap5_parameters():
     ########## /WMAP5
     return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
 
+#def lfi_parameters():
+#    SOLSYSSPEED = 370374.00
+#    SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = 1.7652343830474744, 2.9965189663018474
+#    return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
+
 def lfi_parameters():
-    SOLSYSSPEED = 370374.00
-    SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = 1.7652343830474744, 2.9965189663018474
+    SOLSYSSPEED = 370082.2332
+    SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI = np.radians(101.16218), np.radians(171.65183)
     return SOLSYSSPEED, SOLSYSDIR_ECL_THETA, SOLSYSDIR_ECL_PHI
 
 def dipole_parameters_galactic_to_ecl_amp_ang(dipole_vector_galactic):
@@ -135,12 +140,14 @@ class SatelliteVelocity(object):
     """Satellite speed from Horizon"""
 
 
-    def __init__(self, coord='G', interp='linear', dipole_vector_galactic=None):
+    def __init__(self, coord='G', interp='linear', dipole_vector_galactic=None, speed=None, theta_ecl=None, phi_ecl=None):
         self.eph = load_ephemerides()
         self.coord = coord
         self.interp = interp
         if dipole_vector_galactic:
             self.solar_system_v_ecl = gal2ecl(dipole_vector_galactic)
+        elif speed:
+            self.solar_system_v_ecl = compute_SOLSYSSPEED_V(speed, theta_ecl, phi_ecl)
         else:
             self.solar_system_v_ecl = compute_SOLSYSSPEED_V(*lfi_parameters())
         l.info('Satellite Velocity: coord=%s' % coord)
@@ -207,7 +214,8 @@ class Dipole(object):
         for row in np.loadtxt(os.path.join(os.path.dirname(__file__), "4pidipbeam.csv"),delimiter=',',dtype=[('tag','S10'),('s',np.double,(1,3)),('S',np.double)]):
             self.beam_sum[row['tag']] = row['s'].flatten() # * row['S'] # fix for delta dx9
 
-        fourpi = pd.read_csv("/oasis/projects/nsf/csb136/zonca/p/software/dipole/dipole/e4pi_coeff_ba_qucs_by_diode_dx11_power=00_noalpha_v4.csv")
+        from planck import private
+        fourpi = pd.read_csv(private.e4pi_parameters)
         fourpi["chtag"] = ["LFI%d%s" % (fh, arm) for fh, arm in zip(fourpi.fh, fourpi.polarization)]
         self.fourpi=fourpi.set_index("chtag")
 
